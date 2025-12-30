@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import sharp from "sharp";
 
 interface DitherOptions {
   foreground: string;
@@ -9,18 +9,20 @@ interface DitherOptions {
   contrast?: number;
 }
 
+const HEX_COLOR_REGEX = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
+
 /**
  * Convert hex color to RGB
  */
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const result = HEX_COLOR_REGEX.exec(hex);
   if (!result) {
     throw new Error(`Invalid hex color: ${hex}`);
   }
   return {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16),
+    r: Number.parseInt(result[1], 16),
+    g: Number.parseInt(result[2], 16),
+    b: Number.parseInt(result[3], 16),
   };
 }
 
@@ -42,8 +44,8 @@ async function loadBlueNoiseTexture(noisePath: string): Promise<{
   const noiseImage = sharp(noisePath);
   const metadata = await noiseImage.metadata();
 
-  if (!metadata.width || !metadata.height) {
-    throw new Error('Could not determine noise texture dimensions');
+  if (!(metadata.width && metadata.height)) {
+    throw new Error("Could not determine noise texture dimensions");
   }
 
   // Convert to grayscale
@@ -79,7 +81,7 @@ export async function applyBlueNoiseDither(
   // Resize if width or height specified
   if (options.width || options.height) {
     image = image.resize(options.width, options.height, {
-      fit: 'inside',
+      fit: "inside",
       withoutEnlargement: false,
     });
   }
@@ -98,8 +100,8 @@ export async function applyBlueNoiseDither(
   const width = info.width;
   const height = info.height;
 
-  if (!width || !height) {
-    throw new Error('Could not determine image dimensions');
+  if (!(width && height)) {
+    throw new Error("Could not determine image dimensions");
   }
 
   // Create output buffer (RGB)

@@ -108,10 +108,14 @@ class SeededRandom {
   }
 
   next(): number {
-    this.seed = (this.seed + 0x6D2B79F5) | 0;
+    // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operations are intentional for Mulberry32 PRNG algorithm
+    this.seed = (this.seed + 0x6d_2b_79_f5) | 0;
+    // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operations are intentional for Mulberry32 PRNG algorithm
     let t = Math.imul(this.seed ^ (this.seed >>> 15), 1 | this.seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operations are intentional for Mulberry32 PRNG algorithm
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operations are intentional for Mulberry32 PRNG algorithm
+    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
   }
 }
 
@@ -119,7 +123,13 @@ class SeededRandom {
  * Complex number for FFT calculations
  */
 class Complex {
-  constructor(public real: number, public imag: number) {}
+  real: number;
+  imag: number;
+
+  constructor(real: number, imag: number) {
+    this.real = real;
+    this.imag = imag;
+  }
 
   add(other: Complex): Complex {
     return new Complex(this.real + other.real, this.imag + other.imag);
@@ -146,18 +156,19 @@ class Complex {
  * Optimized for power-of-two sizes
  */
 class FFT {
-  private size: number;
-  private bitReversedIndices: number[];
+  private readonly size: number;
+  private readonly bitReversedIndices: number[];
 
   constructor(size: number) {
     if (!this.isPowerOfTwo(size)) {
-      throw new Error('FFT size must be a power of two');
+      throw new Error("FFT size must be a power of two");
     }
     this.size = size;
     this.bitReversedIndices = this.computeBitReversedIndices();
   }
 
   private isPowerOfTwo(n: number): boolean {
+    // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operation is intentional for power-of-two check
     return n > 0 && (n & (n - 1)) === 0;
   }
 
@@ -168,7 +179,9 @@ class FFT {
     for (let i = 0; i < this.size; i++) {
       let reversed = 0;
       for (let j = 0; j < bits; j++) {
+        // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operations are intentional for bit-reversal algorithm
         if (i & (1 << j)) {
+          // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operations are intentional for bit-reversal algorithm
           reversed |= 1 << (bits - 1 - j);
         }
       }
@@ -193,14 +206,11 @@ class FFT {
     // Cooley-Tukey decimation-in-time
     for (let len = 2; len <= this.size; len *= 2) {
       const halfLen = len / 2;
-      const angle = -2 * Math.PI / len;
+      const angle = (-2 * Math.PI) / len;
 
       for (let i = 0; i < this.size; i += len) {
         for (let j = 0; j < halfLen; j++) {
-          const w = new Complex(
-            Math.cos(angle * j),
-            Math.sin(angle * j)
-          );
+          const w = new Complex(Math.cos(angle * j), Math.sin(angle * j));
 
           const u = data[i + j];
           const v = data[i + j + halfLen].mul(w);
@@ -236,10 +246,10 @@ class FFT {
  * 2D FFT implementation using row-column decomposition
  */
 class FFT2D {
-  private width: number;
-  private height: number;
-  private rowFFT: FFT;
-  private colFFT: FFT;
+  private readonly width: number;
+  private readonly height: number;
+  private readonly rowFFT: FFT;
+  private readonly colFFT: FFT;
 
   constructor(width: number, height: number) {
     this.width = width;
@@ -338,6 +348,7 @@ export class BlueNoiseGenerator {
 
   // Helper methods
   private static isPowerOfTwo(n: number): boolean {
+    // biome-ignore lint/suspicious/noBitwiseOperators: Bitwise operation is intentional for power-of-two check
     return n > 0 && (n & (n - 1)) === 0;
   }
 
@@ -351,46 +362,51 @@ export class BlueNoiseGenerator {
   private readonly random: SeededRandom;
 
   // Working arrays
-  private bitmap: Uint8Array;
-  private rank: Int32Array;
+  private readonly bitmap: Uint8Array;
+  private readonly rank: Int32Array;
   private energy: Float32Array;
 
   // Cached values for performance
-  private onesCount: number = 0;
+  private onesCount = 0;
 
   // FFT optimization
-  private useFFT: boolean;
-  private fft2D: FFT2D | null = null;
-  private gaussianKernel: Complex[][] | null = null;
+  private readonly useFFT: boolean;
+  private readonly fft2D: FFT2D | null = null;
+  private readonly gaussianKernel: Complex[][] | null = null;
 
   constructor(config: BlueNoiseConfig) {
     // Input validation
     if (config.width <= 0 || config.height <= 0) {
-      throw new Error('Width and height must be positive');
+      throw new Error("Width and height must be positive");
     }
-    if (!Number.isInteger(config.width) || !Number.isInteger(config.height)) {
-      throw new Error('Width and height must be integers');
+    if (!(Number.isInteger(config.width) && Number.isInteger(config.height))) {
+      throw new Error("Width and height must be integers");
     }
     if (config.sigma !== undefined && config.sigma <= 0) {
-      throw new Error('Sigma must be positive');
+      throw new Error("Sigma must be positive");
     }
-    if (config.initialDensity !== undefined &&
-        (config.initialDensity <= 0 || config.initialDensity >= 1)) {
-      throw new Error('Initial density must be between 0 and 1');
+    if (
+      config.initialDensity !== undefined &&
+      (config.initialDensity <= 0 || config.initialDensity >= 1)
+    ) {
+      throw new Error("Initial density must be between 0 and 1");
     }
 
     this.width = config.width;
     this.height = config.height;
     this.area = this.width * this.height;
     this.sigma = config.sigma ?? BlueNoiseGenerator.DEFAULT_SIGMA;
-    this.initialDensity = config.initialDensity ?? BlueNoiseGenerator.DEFAULT_INITIAL_DENSITY;
+    this.initialDensity =
+      config.initialDensity ?? BlueNoiseGenerator.DEFAULT_INITIAL_DENSITY;
     this.verbose = config.verbose ?? false;
 
     // Initialize seeded random number generator
     this.random = new SeededRandom(config.seed);
 
     // Use FFT if dimensions are powers of two
-    this.useFFT = BlueNoiseGenerator.isPowerOfTwo(this.width) && BlueNoiseGenerator.isPowerOfTwo(this.height);
+    this.useFFT =
+      BlueNoiseGenerator.isPowerOfTwo(this.width) &&
+      BlueNoiseGenerator.isPowerOfTwo(this.height);
 
     if (this.useFFT) {
       this.fft2D = new FFT2D(this.width, this.height);
@@ -436,7 +452,7 @@ export class BlueNoiseGenerator {
     }
 
     // Transform to frequency domain
-    return this.fft2D!.forward(kernel);
+    return this.fft2D?.forward(kernel);
   }
 
   /**
@@ -456,17 +472,17 @@ export class BlueNoiseGenerator {
       floatData[i] = data[i];
     }
 
-    const dataFreq = this.fft2D!.forward(floatData);
+    const dataFreq = this.fft2D?.forward(floatData);
 
     // Element-wise multiplication in frequency domain (convolution)
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        dataFreq[y][x] = dataFreq[y][x].mul(this.gaussianKernel![y][x]);
+        dataFreq[y][x] = dataFreq[y][x].mul(this.gaussianKernel?.[y][x]);
       }
     }
 
     // Transform back to spatial domain
-    return this.fft2D!.inverse(dataFreq);
+    return this.fft2D?.inverse(dataFreq);
   }
 
   /**
@@ -513,9 +529,8 @@ export class BlueNoiseGenerator {
   private gaussianBlur(data: Uint8Array): Float32Array {
     if (this.useFFT) {
       return this.gaussianBlurFFT(data);
-    } else {
-      return this.gaussianBlurSpatial(data);
     }
+    return this.gaussianBlurSpatial(data);
   }
 
   /**
@@ -528,7 +543,7 @@ export class BlueNoiseGenerator {
    * @returns Index of the pixel in the tightest cluster
    */
   private findTightestCluster(): number {
-    let maxEnergy = -Infinity;
+    let maxEnergy = Number.NEGATIVE_INFINITY;
     let maxIdx = -1;
 
     for (let i = 0; i < this.area; i++) {
@@ -551,7 +566,7 @@ export class BlueNoiseGenerator {
    * @returns Index of the pixel in the largest void
    */
   private findLargestVoid(): number {
-    let minEnergy = Infinity;
+    let minEnergy = Number.POSITIVE_INFINITY;
     let minIdx = -1;
 
     for (let i = 0; i < this.area; i++) {
@@ -630,7 +645,8 @@ export class BlueNoiseGenerator {
 
     // Redistribute points until convergence
     let iterations = 0;
-    const maxIterations = this.area * BlueNoiseGenerator.MAX_ITERATIONS_MULTIPLIER;
+    const maxIterations =
+      this.area * BlueNoiseGenerator.MAX_ITERATIONS_MULTIPLIER;
 
     while (iterations < maxIterations) {
       iterations++;
@@ -684,7 +700,10 @@ export class BlueNoiseGenerator {
    * voids until the bitmap is 50% full. Ranks continue from initialPoints
    * to area/2. This builds up a minority pattern (less than half full).
    */
-  private phase2_fillToHalf(prototype: Uint8Array, initialPoints: number): void {
+  private phase2_fillToHalf(
+    prototype: Uint8Array,
+    initialPoints: number
+  ): void {
     this.bitmap.set(prototype);
     this.recalculateOnesCount();
     this.recalculateEnergy();
@@ -710,7 +729,7 @@ export class BlueNoiseGenerator {
    * ranking them from area/2 to area-1. This clever inversion allows the
    * algorithm to work symmetrically for both minority and majority patterns.
    */
-  private phase3_fillToCompletion(rankCounter: number): void {
+  private phase3_fillToCompletion(startRank: number): void {
     // Invert bitmap
     for (let i = 0; i < this.area; i++) {
       this.bitmap[i] = 1 - this.bitmap[i];
@@ -718,6 +737,7 @@ export class BlueNoiseGenerator {
     this.recalculateOnesCount();
     this.recalculateEnergy();
 
+    let rankCounter = startRank;
     while (rankCounter < this.area) {
       const clusterIdx = this.findTightestCluster();
       this.rank[clusterIdx] = rankCounter;
@@ -739,7 +759,9 @@ export class BlueNoiseGenerator {
     const output = new Uint8ClampedArray(this.area);
 
     for (let i = 0; i < this.area; i++) {
-      output[i] = Math.floor((this.rank[i] * BlueNoiseGenerator.THRESHOLD_MAP_LEVELS) / this.area);
+      output[i] = Math.floor(
+        (this.rank[i] * BlueNoiseGenerator.THRESHOLD_MAP_LEVELS) / this.area
+      );
     }
 
     return output;
@@ -748,13 +770,17 @@ export class BlueNoiseGenerator {
   /**
    * Generate the blue noise texture
    */
-  public generate(): BlueNoiseResult {
+  generate(): BlueNoiseResult {
     const startTime = this.verbose ? Date.now() : 0;
 
     if (this.verbose) {
-      console.log(`Generating ${this.width}x${this.height} blue noise texture...`);
-      console.log(`Using ${this.useFFT ? 'FFT-optimized' : 'spatial'} Gaussian blur`);
-      console.log('Phase 0: Generating initial pattern...');
+      console.log(
+        `Generating ${this.width}x${this.height} blue noise texture...`
+      );
+      console.log(
+        `Using ${this.useFFT ? "FFT-optimized" : "spatial"} Gaussian blur`
+      );
+      console.log("Phase 0: Generating initial pattern...");
     }
 
     this.phase0_generateInitialPattern();
@@ -764,33 +790,35 @@ export class BlueNoiseGenerator {
 
     if (this.verbose) {
       console.log(`Initial pattern: ${initialPoints} points`);
-      console.log('Phase 1: Serializing initial points...');
+      console.log("Phase 1: Serializing initial points...");
     }
 
     this.phase1_serializeInitialPoints();
 
     if (this.verbose) {
-      console.log('Phase 2: Filling to half capacity...');
+      console.log("Phase 2: Filling to half capacity...");
     }
 
     this.phase2_fillToHalf(prototype, initialPoints);
 
     if (this.verbose) {
-      console.log('Phase 3: Filling to completion...');
+      console.log("Phase 3: Filling to completion...");
     }
 
     const halfArea = Math.floor(this.area / 2);
     this.phase3_fillToCompletion(halfArea);
 
     if (this.verbose) {
-      console.log('Phase 4: Converting to threshold map...');
+      console.log("Phase 4: Converting to threshold map...");
     }
 
     const data = this.phase4_convertToThresholdMap();
 
     if (this.verbose) {
       const elapsed = Date.now() - startTime;
-      console.log(`✓ Blue noise generation complete in ${(elapsed / 1000).toFixed(2)}s`);
+      console.log(
+        `✓ Blue noise generation complete in ${(elapsed / 1000).toFixed(2)}s`
+      );
     }
 
     return { data, width: this.width, height: this.height };
@@ -801,9 +829,9 @@ export class BlueNoiseGenerator {
  * Convenience function to generate a blue noise texture
  */
 export function generateBlueNoise(
-  width: number = 64,
-  height: number = 64,
-  sigma: number = 1.9
+  width = 64,
+  height = 64,
+  sigma = 1.9
 ): BlueNoiseResult {
   const generator = new BlueNoiseGenerator({ width, height, sigma });
   return generator.generate();
@@ -817,21 +845,22 @@ export async function saveBlueNoiseToPNG(
   filename: string
 ): Promise<void> {
   try {
-    const sharp = await import('sharp');
+    const sharp = await import("sharp");
 
-    await sharp.default(result.data, {
-      raw: {
-        width: result.width,
-        height: result.height,
-        channels: 1
-      }
-    })
-    .png()
-    .toFile(filename);
+    await sharp
+      .default(result.data, {
+        raw: {
+          width: result.width,
+          height: result.height,
+          channels: 1,
+        },
+      })
+      .png()
+      .toFile(filename);
 
     console.log(` Saved blue noise texture to ${filename}`);
   } catch (error) {
-    console.error('Error saving PNG:', error);
+    console.error("Error saving PNG:", error);
     throw error;
   }
 }
@@ -844,7 +873,7 @@ export function orderedDither(
   x: number,
   y: number,
   blueNoise: BlueNoiseResult,
-  levels: number = 2
+  levels = 2
 ): number {
   const noiseX = x % blueNoise.width;
   const noiseY = y % blueNoise.height;
@@ -856,8 +885,10 @@ export function orderedDither(
   const quantized = Math.floor(normalized / step);
   const fraction = (normalized % step) / step;
 
-  const output = (fraction > threshold / 255) ?
-    Math.min(quantized + 1, levels - 1) : quantized;
+  const output =
+    fraction > threshold / 255
+      ? Math.min(quantized + 1, levels - 1)
+      : quantized;
 
   return Math.floor((output * 255) / (levels - 1));
 }
