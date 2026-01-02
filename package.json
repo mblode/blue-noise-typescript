@@ -39,6 +39,8 @@
     "ultracite": "^7.0.5"
   },
   "lint-staged": {
-    "*": "biome check --write --no-errors-on-unmatched"
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
+      "npx ultracite fix"
+    ]
   }
 }
