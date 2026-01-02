@@ -452,7 +452,10 @@ export class BlueNoiseGenerator {
     }
 
     // Transform to frequency domain
-    return this.fft2D?.forward(kernel);
+    if (!this.fft2D) {
+      throw new Error("FFT2D instance is required but not initialized");
+    }
+    return this.fft2D.forward(kernel);
   }
 
   /**
@@ -472,17 +475,24 @@ export class BlueNoiseGenerator {
       floatData[i] = data[i];
     }
 
-    const dataFreq = this.fft2D?.forward(floatData);
+    if (!this.fft2D) {
+      throw new Error("FFT2D instance is required but not initialized");
+    }
+    if (!this.gaussianKernel) {
+      throw new Error("Gaussian kernel is required but not initialized");
+    }
+
+    const dataFreq = this.fft2D.forward(floatData);
 
     // Element-wise multiplication in frequency domain (convolution)
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        dataFreq[y][x] = dataFreq[y][x].mul(this.gaussianKernel?.[y][x]);
+        dataFreq[y][x] = dataFreq[y][x].mul(this.gaussianKernel[y][x]);
       }
     }
 
     // Transform back to spatial domain
-    return this.fft2D?.inverse(dataFreq);
+    return this.fft2D.inverse(dataFreq);
   }
 
   /**
