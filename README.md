@@ -1,6 +1,9 @@
 # Blue Noise Dithering
 
-A CLI to dither images with blue noise, and generate blue noise textures using the void-and-cluster algorithm.
+[![npm version](https://img.shields.io/npm/v/blue-noise.svg)](https://www.npmjs.com/package/blue-noise)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+A CLI tool to dither images with blue noise, and generate blue noise textures using the void-and-cluster algorithm.
 
 ![Dithered profile image](img/matthew-profile-dithered.png)
 
@@ -15,30 +18,40 @@ _64×64 tileable blue noise texture_
 ## Installation
 
 ```bash
-npm install
+# Install globally
+npm install -g blue-noise
+
+# Or use directly with npx
+npx blue-noise <input-image>
 ```
 
 ## Usage
 
 ```bash
 # Basic usage
-npm run dither <input-image>
+blue-noise <input-image>
 
 # Custom colours
-npm run dither <input-image> -- -f <foreground-hex> -b <background-hex>
+blue-noise <input-image> -f <foreground-hex> -b <background-hex>
 ```
 
 ### Examples
 
 ```bash
-# Black and white
-npm run dither input/claude-shannon-mouse-mit-00.jpg
+# Black and white dithering
+blue-noise photo.jpg
 
 # Custom colours
-npm run dither input/claude-shannon-mouse-mit-00.jpg -- -f "#ff0000" -b "#ffffff"
+blue-noise photo.jpg -f "#ff0000" -b "#ffffff"
 
-# Different noise texture
-npm run dither input/claude-shannon-mouse-mit-00.jpg -- -n custom-noise.png
+# Resize and adjust contrast
+blue-noise photo.jpg -w 800 -c 1.2
+
+# Use custom noise texture
+blue-noise photo.jpg -n custom-noise.png
+
+# Using npx (no installation required)
+npx blue-noise photo.jpg -f "#0000ff" -b "#ffff00"
 ```
 
 ## CLI Options
@@ -56,14 +69,29 @@ npm run dither input/claude-shannon-mouse-mit-00.jpg -- -n custom-noise.png
 
 ### Generate Command
 
+Generate custom blue noise textures:
+
 ```bash
-npm run start generate -- --size 64 --sigma 1.9 --verbose
+blue-noise generate --size 64 --sigma 1.9 --verbose
 ```
 
 - `-s, --size <pixels>` - Texture size (8-512, default: 64)
 - `--sigma <value>` - Gaussian sigma (1.0-3.0, default: 1.9)
 - `--seed <number>` - Random seed for reproducibility
 - `-v, --verbose` - Show generation progress
+
+**Examples:**
+
+```bash
+# Generate 128×128 texture with default settings
+blue-noise generate -s 128
+
+# Generate with custom sigma and seed
+blue-noise generate -s 64 --sigma 2.1 --seed 42
+
+# Generate with verbose output
+blue-noise generate -s 256 -v
+```
 
 ## How It Works
 
