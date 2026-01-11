@@ -3,17 +3,9 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [
-    [
-      "blue-noise"
-    ]
-  ],
+  "linked": [["blue-noise"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "web",
-    "docs",
-    "docs-worker"
-  ]
+  "ignore": []
 }

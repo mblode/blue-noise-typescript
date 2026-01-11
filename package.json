@@ -26,8 +26,8 @@
     "dithering",
     "image-processing"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Matthew Blode <m@blode.co>",
+  "license": "MIT",
   "dependencies": {
     "commander": "^12.1.0",
     "sharp": "^0.33.5"

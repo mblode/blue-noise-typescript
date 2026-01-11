@@ -33,11 +33,5 @@ jobs:
       - name: Typecheck
         run: npm run check-types
 
-      - name: Test Library
-        run: npm run test --workspace=@dnd-grid/react
-
       - name: Build
         run: npm run build
-
-      - name: Smoke Test Docs Worker
-        run: npm run smoke --workspace=docs-worker
