@@ -1,6 +1,6 @@
 {
   "name": "blue-noise",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Blue noise dithering for images",
   "type": "module",
   "main": "dist/index.js",
