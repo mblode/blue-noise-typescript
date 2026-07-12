@@ -20,9 +20,9 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
     throw new Error(`Invalid hex color: ${hex}`);
   }
   return {
-    r: Number.parseInt(result[1], 16),
-    g: Number.parseInt(result[2], 16),
     b: Number.parseInt(result[3], 16),
+    g: Number.parseInt(result[2], 16),
+    r: Number.parseInt(result[1], 16),
   };
 }
 
@@ -56,8 +56,8 @@ async function loadBlueNoiseTexture(noisePath: string): Promise<{
 
   return {
     data,
-    width: metadata.width,
     height: metadata.height,
+    width: metadata.width,
   };
 }
 
@@ -97,8 +97,8 @@ export async function applyBlueNoiseDither(
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const width = info.width;
-  const height = info.height;
+  const { width } = info;
+  const { height } = info;
 
   if (!(width && height)) {
     throw new Error("Could not determine image dimensions");
@@ -140,9 +140,9 @@ export async function applyBlueNoiseDither(
   // Save the output image
   await sharp(output, {
     raw: {
-      width,
-      height,
       channels: 3,
+      height,
+      width,
     },
   })
     .png()

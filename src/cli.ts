@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 import path from "node:path";
+
 import { Command } from "commander";
+
 import { applyBlueNoiseDither } from "./dither.js";
 import { BlueNoiseGenerator, saveBlueNoiseToPNG } from "./generator.js";
 
@@ -86,12 +88,12 @@ program
       console.log(`Background: ${options.background}`);
 
       await applyBlueNoiseDither(inputPath, outputPath, {
-        foreground: options.foreground,
         background: options.background,
+        contrast,
+        foreground: options.foreground,
+        height,
         noisePath,
         width,
-        height,
-        contrast,
       });
 
       console.log("Done!");
@@ -127,7 +129,7 @@ program
       if (Number.isNaN(size) || size < 8 || size > 512) {
         throw new Error("Size must be between 8 and 512");
       }
-      if (Number.isNaN(sigma) || sigma < 1.0 || sigma > 3.0) {
+      if (Number.isNaN(sigma) || sigma < 1 || sigma > 3) {
         throw new Error("Sigma must be between 1.0 and 3.0");
       }
 
@@ -143,11 +145,11 @@ program
 
       // Generate blue noise
       const generator = new BlueNoiseGenerator({
-        width: size,
         height: size,
-        sigma,
         seed,
+        sigma,
         verbose: options.verbose,
+        width: size,
       });
 
       const result = generator.generate();

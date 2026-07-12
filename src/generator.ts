@@ -831,7 +831,7 @@ export class BlueNoiseGenerator {
       );
     }
 
-    return { data, width: this.width, height: this.height };
+    return { data, height: this.height, width: this.width };
   }
 }
 
@@ -843,7 +843,7 @@ export function generateBlueNoise(
   height = 64,
   sigma = 1.9
 ): BlueNoiseResult {
-  const generator = new BlueNoiseGenerator({ width, height, sigma });
+  const generator = new BlueNoiseGenerator({ height, sigma, width });
   return generator.generate();
 }
 
@@ -860,9 +860,9 @@ export async function saveBlueNoiseToPNG(
     await sharp
       .default(result.data, {
         raw: {
-          width: result.width,
-          height: result.height,
           channels: 1,
+          height: result.height,
+          width: result.width,
         },
       })
       .png()
