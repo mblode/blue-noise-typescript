@@ -114,4 +114,4 @@ The texture tiles seamlessly using torus topology. Power-of-two dimensions (64×
 
 - [Ditherpunk](https://surma.dev/lab/ditherpunk/) - Interactive dithering playground
 - [Dithering - Part 1](https://visualrambling.space/dithering-part-1/) - Deep dive into dithering techniques
-- [Dither Asteroids](https://dither.blode.co/) - Dithering asteroids game
+- [Dither Asteroids](https://blode.co/dither) - Dithering asteroids game
