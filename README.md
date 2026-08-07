@@ -18,7 +18,8 @@ Point it at a photo and get back a stippled version that still reads at small si
 </div>
 
 <p align="center">
-  <img alt="A photograph dithered with blue noise" src="img/matthew-profile-dithered.png" width="320" />
+  <img alt="Source photograph" src="img/dark.png" width="320" />
+  <img alt="The same photograph dithered with blue noise" src="img/dark-noise.jpg" width="320" />
 </p>
 
 ## Install
