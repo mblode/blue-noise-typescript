@@ -75,7 +75,7 @@ npx blue-noise generate -s 128 --sigma 2.1 --seed 42 -v
 - Power-of-two sizes run their Gaussian blur through an FFT, roughly halving generation time.
 - Uses the void-and-cluster algorithm from [Ulichney (1993)](https://doi.org/10.1117/12.152707), building on [Ulichney (1988)](https://doi.org/10.1109/5.3288).
 - [blue-noise-rust](https://github.com/mblode/blue-noise-rust) is the same dithering as a Rust crate, if you want it in a native pipeline.
-- Further reading: [Ditherpunk](https://surma.dev/lab/ditherpunk/), [Dithering Part 1](https://visualrambling.space/dithering-part-1/), and [Dither Asteroids](https://blode.co/dither).
+- Further reading: [Ditherpunk](https://surma.dev/lab/ditherpunk/), [Dithering Part 1](https://visualrambling.space/dithering-part-1/), and [Dither Asteroids](https://blode.co/dither-asteroids).
 
 ## License
 
