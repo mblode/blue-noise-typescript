@@ -8,7 +8,8 @@
     ".changeset/",
     ".factory/plans/",
     "AGENTS.md",
-    "package.json"
+    "package.json",
+    "package-lock.json"
   ],
   "userPaths": [
     "A contributor runs `npm run doctor` and `npm run verify` to prove the CLI still works before shipping"

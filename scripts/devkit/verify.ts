@@ -1,9 +1,12 @@
-// npm run verify [-- --since <ref>] [--ci]
+// npm run verify [-- --since <ref> | --all] [--ci]
 // Maps the files changed since <ref> (default origin/main, plus uncommitted
 // and untracked files) to features through their feature.json paths, runs
 // each touched feature's checks and writes .factory/proof.json: per feature,
-// the user paths covered, skipped (with the reason) and failed. Exits 1
-// when a check fails or a changed source file belongs to no feature.
+// the user paths covered, skipped (with the reason) and failed. --all skips
+// the diff and treats every tracked and untracked file as changed, running
+// every feature's checks; use it whenever the natural --since ref cannot be
+// trusted to mean anything (see verify-args.ts). Exits 1 when a check fails
+// or a changed source file belongs to no feature.
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -17,6 +20,7 @@ import type { Run } from "./proof.ts";
 const root = path.resolve(import.meta.dirname, "../..");
 const { values } = parseArgs({
   options: {
+    all: { default: false, type: "boolean" },
     ci: { default: false, type: "boolean" },
     since: { default: "origin/main", type: "string" },
   },
@@ -26,21 +30,26 @@ const git = (...args: string[]) =>
   execFileSync("git", args, { cwd: root, encoding: "utf-8" }).trim();
 const lines = (text: string) => text.split("\n").filter(Boolean);
 
-let base: string;
-try {
-  base = git("merge-base", values.since, "HEAD");
-} catch {
-  console.error(
-    `git cannot find a merge base with ${values.since}. Run \`git fetch origin\` or pass --since <ref>.`
-  );
-  process.exit(1);
+let base = "";
+let changed: string[];
+if (values.all) {
+  changed = repoFiles(root).toSorted();
+} else {
+  try {
+    base = git("merge-base", values.since, "HEAD");
+  } catch {
+    console.error(
+      `git cannot find a merge base with ${values.since}. Run \`git fetch origin\` or pass --since <ref>, or --all to run every feature.`
+    );
+    process.exit(1);
+  }
+  changed = [
+    ...new Set([
+      ...lines(git("diff", "--name-only", base)),
+      ...lines(git("ls-files", "--others", "--exclude-standard")),
+    ]),
+  ].toSorted();
 }
-const changed = [
-  ...new Set([
-    ...lines(git("diff", "--name-only", base)),
-    ...lines(git("ls-files", "--others", "--exclude-standard")),
-  ]),
-].toSorted();
 
 const { loaded, problems } = loadFeatures(root, repoFiles(root));
 if (problems.length > 0) {
@@ -100,7 +109,7 @@ const proof = {
   features: proofFeatures,
   ok: failed.length === 0 && uncoveredSource.length === 0,
   sha: git("rev-parse", "HEAD"),
-  since: values.since,
+  since: values.all ? "all" : values.since,
   uncovered,
 };
 const proofFile = path.join(root, ".factory", "proof.json");
@@ -108,7 +117,7 @@ mkdirSync(path.dirname(proofFile), { recursive: true });
 writeFileSync(proofFile, `${JSON.stringify(proof, null, 2)}\n`);
 
 console.log(
-  `\nverify since ${values.since}: ${changed.length} changed files, ${features.length} features`
+  `\nverify (${proof.since}): ${changed.length} changed files, ${features.length} features`
 );
 for (const f of proofFeatures) {
   console.log(

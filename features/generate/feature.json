@@ -1,7 +1,12 @@
 {
   "id": "generate",
   "title": "Generate a blue noise texture",
-  "paths": ["src/generator.ts", "src/cli.ts"],
+  "paths": [
+    "src/generator.ts",
+    "src/cli.ts",
+    "package.json",
+    "package-lock.json"
+  ],
   "userPaths": [
     "A user generates a tileable blue-noise PNG texture with `blue-noise generate -s <size> --seed <n>`"
   ],
