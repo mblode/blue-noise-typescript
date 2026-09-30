@@ -7,15 +7,17 @@ import path from "node:path";
 // `npm run verify` maps a diff to features through `paths` and runs their
 // checks; `npm run check-features` keeps the map honest.
 
-export const methods = ["cli", "playwright", "cdp", "computer-use"] as const;
+// This CLI has no browser surface, so the only supported check method is
+// "cli": a command that builds and runs dist/cli.js. Add "playwright" (or
+// another browser method) here, and its argv construction in verify.ts,
+// only once there is an e2e/ suite to drive.
+export const methods = ["cli"] as const;
 export type Method = (typeof methods)[number];
 
 export interface Check {
-  command?: string;
-  grep?: string;
+  command: string;
   method: Method;
   path: string;
-  spec?: string;
 }
 
 export interface Feature {
@@ -203,31 +205,10 @@ export const commandProblems = (
     );
 };
 
-const checkProblems = (
-  root: string,
-  item: Check,
-  spaces: Map<string, Workspace>
-) => {
-  if (item.method === "cli") {
-    return item.command
-      ? commandProblems(item.command, spaces)
-      : [`cli check "${item.path}" needs a command (${shape})`];
-  }
-  if (!item.spec) {
-    return [`${item.method} check "${item.path}" needs a spec file`];
-  }
-  const spec = path.join(root, item.spec);
-  if (!existsSync(spec)) {
-    return [`spec ${item.spec} does not exist`];
-  }
-  if (item.method === "playwright" && !item.spec.startsWith("e2e/")) {
-    return [`playwright spec ${item.spec} must live under e2e/`];
-  }
-  if (item.grep && !readFileSync(spec, "utf-8").includes(item.grep)) {
-    return [`grep "${item.grep}" matches no test title or tag in ${item.spec}`];
-  }
-  return [];
-};
+const checkProblems = (item: Check, spaces: Map<string, Workspace>) =>
+  item.command
+    ? commandProblems(item.command, spaces)
+    : [`cli check "${item.path}" needs a command (${shape})`];
 
 /** Every problem with the map, each naming its fix. */
 export const validate = (root: string, loaded: Loaded[], files: string[]) => {
@@ -256,7 +237,7 @@ export const validate = (root: string, loaded: Loaded[], files: string[]) => {
         );
       }
       problems.push(
-        ...checkProblems(root, item, spaces).map((p) => `${file}: ${p}.`)
+        ...checkProblems(item, spaces).map((p) => `${file}: ${p}.`)
       );
     }
   }
