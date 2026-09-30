@@ -1,0 +1,33 @@
+{
+  "id": "verification-harness",
+  "title": "Doctor, verify and the feature map",
+  "paths": [
+    "scripts/devkit/",
+    "features/",
+    ".github/workflows/ci.yml",
+    ".changeset/",
+    ".factory/plans/",
+    "AGENTS.md",
+    "package.json",
+    "package-lock.json"
+  ],
+  "userPaths": [
+    "A contributor runs `npm run doctor` and `npm run verify` to prove the CLI still works before shipping"
+  ],
+  "checks": [
+    {
+      "path": "A contributor runs `npm run doctor` and `npm run verify` to prove the CLI still works before shipping",
+      "method": "cli",
+      "command": "npm run doctor"
+    },
+    {
+      "path": "A contributor runs `npm run doctor` and `npm run verify` to prove the CLI still works before shipping",
+      "method": "cli",
+      "command": "npm run check-features"
+    }
+  ],
+  "preconditions": [],
+  "gotchas": [
+    "`npm run verify` shells out to `factory proof`, which is silently a no-op when the `factory` CLI is not on PATH."
+  ]
+}

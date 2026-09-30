@@ -34,5 +34,20 @@ jobs:
       - name: Typecheck
         run: npm run check:types
 
+      - name: Test devkit harness
+        run: npm test
+
       - name: Build
         run: npm run build
+
+      - name: Doctor
+        run: npm run doctor
+
+      - name: Check feature map
+        run: npm run check-features
+
+      - name: Verify
+        run: npm run verify -- $(node scripts/devkit/print-verify-args.ts) --ci
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}

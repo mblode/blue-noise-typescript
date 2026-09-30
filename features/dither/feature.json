@@ -1,0 +1,28 @@
+{
+  "id": "dither",
+  "title": "Dither an image with a blue noise texture",
+  "paths": [
+    "src/dither.ts",
+    "src/cli.ts",
+    "blue-noise.png",
+    "package.json",
+    "package-lock.json"
+  ],
+  "userPaths": [
+    "A user dithers an image against a blue-noise texture, producing a two-color PNG"
+  ],
+  "checks": [
+    {
+      "path": "A user dithers an image against a blue-noise texture, producing a two-color PNG",
+      "method": "cli",
+      "command": "npm run verify:dither"
+    }
+  ],
+  "preconditions": [
+    "`npm run doctor` passes.",
+    "blue-noise.png at the repo root is the noise texture used by the check."
+  ],
+  "gotchas": [
+    "The output directory (-o) must already exist; the CLI does not create it."
+  ]
+}

@@ -1,0 +1,146 @@
+// npm run verify [-- --since <ref> | --all] [--ci]
+// Maps the files changed since <ref> (default origin/main, plus uncommitted
+// and untracked files) to features through their feature.json paths, runs
+// each touched feature's checks and writes .factory/proof.json: per feature,
+// the user paths covered, skipped (with the reason) and failed. --all skips
+// the diff and treats every tracked and untracked file as changed, running
+// every feature's checks; use it whenever the natural --since ref cannot be
+// trusted to mean anything (see verify-args.ts). Exits 1 when a check fails
+// or a changed source file belongs to no feature.
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { parseArgs } from "node:util";
+
+import { isSource, loadFeatures, mapFiles, repoFiles } from "./features.ts";
+import type { Check, Loaded } from "./features.ts";
+import { coverage } from "./proof.ts";
+import type { Run } from "./proof.ts";
+
+const root = path.resolve(import.meta.dirname, "../..");
+const { values } = parseArgs({
+  options: {
+    all: { default: false, type: "boolean" },
+    ci: { default: false, type: "boolean" },
+    since: { default: "origin/main", type: "string" },
+  },
+});
+
+const git = (...args: string[]) =>
+  execFileSync("git", args, { cwd: root, encoding: "utf-8" }).trim();
+const lines = (text: string) => text.split("\n").filter(Boolean);
+
+let base = "";
+let changed: string[];
+if (values.all) {
+  changed = repoFiles(root).toSorted();
+} else {
+  try {
+    base = git("merge-base", values.since, "HEAD");
+  } catch {
+    console.error(
+      `git cannot find a merge base with ${values.since}. Run \`git fetch origin\` or pass --since <ref>, or --all to run every feature.`
+    );
+    process.exit(1);
+  }
+  changed = [
+    ...new Set([
+      ...lines(git("diff", "--name-only", base)),
+      ...lines(git("ls-files", "--others", "--exclude-standard")),
+    ]),
+  ].toSorted();
+}
+
+const { loaded, problems } = loadFeatures(root, repoFiles(root));
+if (problems.length > 0) {
+  console.error(
+    `Fix the feature map first (npm run check-features):\n- ${problems.join("\n- ")}`
+  );
+  process.exit(1);
+}
+const { touched, uncovered } = mapFiles(loaded, changed);
+const features = loaded.filter(({ feature }) => touched.has(feature.id));
+
+const argv = (item: Check) => item.command.split(" ").slice(1);
+
+const results = new Map<string, Run>();
+const runCheck = (item: Check): Run => {
+  const args = argv(item);
+  const key = args.join(" ");
+  const cached = results.get(key);
+  if (cached) {
+    return cached;
+  }
+  console.log(`\n$ npm ${key}`);
+  const started = Date.now();
+  const child = spawnSync("npm", args, {
+    cwd: root,
+    env: { ...process.env, ...(values.ci && { CI: "1" }) },
+    stdio: "inherit",
+  });
+  const result = {
+    command: `npm ${key}`,
+    exitCode: child.status ?? 1,
+    ms: Date.now() - started,
+  };
+  results.set(key, result);
+  return result;
+};
+
+const proofFeatures = features.map(({ file, feature }: Loaded) => {
+  const ran = new Map<Check, Run>();
+  for (const item of feature.checks) {
+    ran.set(item, runCheck(item));
+  }
+  return {
+    file,
+    id: feature.id,
+    ...coverage(feature, ran),
+    files: touched.get(feature.id) ?? [],
+  };
+});
+
+const uncoveredSource = uncovered.filter(isSource);
+const failed = proofFeatures.filter((f) => f.failed.length > 0);
+const proof = {
+  base,
+  changed: changed.length,
+  dirty: git("status", "--porcelain") !== "",
+  features: proofFeatures,
+  ok: failed.length === 0 && uncoveredSource.length === 0,
+  sha: git("rev-parse", "HEAD"),
+  since: values.all ? "all" : values.since,
+  uncovered,
+};
+const proofFile = path.join(root, ".factory", "proof.json");
+mkdirSync(path.dirname(proofFile), { recursive: true });
+writeFileSync(proofFile, `${JSON.stringify(proof, null, 2)}\n`);
+
+console.log(
+  `\nverify (${proof.since}): ${changed.length} changed files, ${features.length} features`
+);
+for (const f of proofFeatures) {
+  console.log(
+    `  ${f.failed.length > 0 ? "FAIL" : "ok  "} ${f.id}: covered ${f.covered.length}, skipped ${f.skipped.length}, failed ${f.failed.length}`
+  );
+}
+if (uncoveredSource.length > 0) {
+  console.log(
+    `  FAIL source files in no feature (add them to a feature.json's paths):\n    ${uncoveredSource.join("\n    ")}`
+  );
+}
+console.log(`proof: ${path.relative(root, proofFile)}`);
+if (values.ci) {
+  console.log(JSON.stringify(proof));
+}
+
+// factory records the proof when its CLI is installed; verify never needs it.
+const factory = spawnSync("factory", ["proof", proofFile], {
+  stdio: "inherit",
+});
+if (factory.error) {
+  console.log("factory CLI not on PATH; proof not recorded.");
+}
+if (!proof.ok) {
+  process.exitCode = 1;
+}
