@@ -24,7 +24,12 @@
     "prepare": "lefthook install || true",
     "lint": "ultracite check",
     "format": "ultracite fix",
-    "check:types": "tsc --noEmit"
+    "check:types": "tsc --noEmit",
+    "doctor": "tsx scripts/devkit/doctor.ts",
+    "verify": "tsx scripts/devkit/verify.ts",
+    "verify:generate": "node scripts/devkit/verify-generate.mjs",
+    "verify:dither": "node scripts/devkit/verify-dither.mjs",
+    "check-features": "tsx scripts/devkit/check-features.ts"
   },
   "dependencies": {
     "commander": "^15.0.0",

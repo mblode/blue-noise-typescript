@@ -1,0 +1,19 @@
+{
+  "id": "generate",
+  "title": "Generate a blue noise texture",
+  "paths": ["src/generator.ts", "src/cli.ts"],
+  "userPaths": [
+    "A user generates a tileable blue-noise PNG texture with `blue-noise generate -s <size> --seed <n>`"
+  ],
+  "checks": [
+    {
+      "path": "A user generates a tileable blue-noise PNG texture with `blue-noise generate -s <size> --seed <n>`",
+      "method": "cli",
+      "command": "npm run verify:generate"
+    }
+  ],
+  "preconditions": ["`npm run doctor` passes."],
+  "gotchas": [
+    "Sizes below 64 skip the FFT path (it only kicks in for powers of two), so a 16px check exercises the spatial Gaussian blur, not the fast path."
+  ]
+}

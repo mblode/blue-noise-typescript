@@ -36,3 +36,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Doctor
+        run: npm run doctor
+
+      - name: Check feature map
+        run: npm run check-features
+
+      - name: Verify
+        run: npm run verify -- --since origin/main --ci
